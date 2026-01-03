@@ -1,0 +1,14 @@
+{
+  "name": "moj-portfel-2026",
+  "version": "1.0.0",
+  "description": "Full-stack financial management application with PostgreSQL, JWT auth, and advanced animations",
+  "main": "backend/server.js",
+  "scripts": {
+    "backend": "cd backend && npm run dev",
+    "backend:install": "cd backend && npm install",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "keywords": ["finance", "portfolio", "full-stack"],
+  "author": "",
+  "license": "MIT"
+}
