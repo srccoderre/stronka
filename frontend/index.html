@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mój Portfel 2026 - Dashboard</title>
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/animations.css">
+</head>
+<body>
+    <!-- Loading screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-logo">
+            <div class="logo-pulse"></div>
+            <h2>Mój Portfel 2026</h2>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+    </div>
+
+    <!-- Main app -->
+    <div id="app" class="app hidden">
+        <!-- Header -->
+        <header class="header" data-aos="fade-down">
+            <div class="header-content">
+                <h1 class="app-title">💰 Mój Portfel 2026</h1>
+                <div class="header-actions">
+                    <span class="user-email" id="userEmail"></span>
+                    <button class="btn btn-secondary" id="logoutBtn">Wyloguj</button>
+                </div>
+            </div>
+            
+            <!-- Month navigation -->
+            <div class="month-navigation">
+                <button class="btn-nav" id="prevMonth">◀ Poprzedni</button>
+                <h2 class="current-month" id="currentMonth">Styczeń 2026</h2>
+                <button class="btn-nav" id="nextMonth">Następny ▶</button>
+            </div>
+        </header>
+
+        <!-- Dashboard -->
+        <main class="dashboard">
+            <!-- KPI Cards -->
+            <section class="kpi-section">
+                <div class="card kpi-card" data-aos="fade-up" data-aos-delay="0">
+                    <h3>💵 Zarobki</h3>
+                    <div class="kpi-value income" id="totalIncome">0,00 PLN</div>
+                    <div class="kpi-progress">
+                        <div class="progress-bar-mini">
+                            <div class="progress-fill-mini income-progress" id="incomeProgress"></div>
+                        </div>
+                        <span class="progress-text" id="incomeProgressText">0%</span>
+                    </div>
+                </div>
+
+                <div class="card kpi-card" data-aos="fade-up" data-aos-delay="100">
+                    <h3>💸 Wydatki</h3>
+                    <div class="kpi-value expense" id="totalExpense">0,00 PLN</div>
+                </div>
+
+                <div class="card kpi-card" data-aos="fade-up" data-aos-delay="200">
+                    <h3>📊 Saldo</h3>
+                    <div class="kpi-value balance" id="totalBalance">0,00 PLN</div>
+                </div>
+
+                <div class="card kpi-card" data-aos="fade-up" data-aos-delay="300">
+                    <h3>🏆 Złoto (g)</h3>
+                    <div class="kpi-value gold" id="totalGold">0 g</div>
+                    <div class="kpi-progress">
+                        <div class="progress-bar-mini">
+                            <div class="progress-fill-mini gold-progress" id="goldProgress"></div>
+                        </div>
+                        <span class="progress-text" id="goldProgressText">0%</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Charts section -->
+            <section class="charts-section">
+                <div class="card chart-card" data-aos="fade-right">
+                    <h3>📈 Wykres miesięczny</h3>
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+
+                <div class="card chart-card" data-aos="fade-left">
+                    <h3>🥇 Inwestycje</h3>
+                    <canvas id="investmentsChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Tabs -->
+            <section class="tabs-section" data-aos="fade-up">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="daily">Dzienne wpisy</button>
+                    <button class="tab-btn" data-tab="investments">Inwestycje</button>
+                    <button class="tab-btn" data-tab="goals">Cele miesięczne</button>
+                </div>
+
+                <!-- Daily entries tab -->
+                <div class="tab-content active" id="daily-tab">
+                    <div class="tab-header">
+                        <h3>📝 Dzienne wpisy</h3>
+                        <button class="btn btn-primary" id="addEntryBtn">+ Dodaj wpis</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="entriesTable">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Zarobki</th>
+                                    <th>Wydatki</th>
+                                    <th>Saldo</th>
+                                    <th>Kategoria</th>
+                                    <th>Notatki</th>
+                                    <th>Akcje</th>
+                                </tr>
+                            </thead>
+                            <tbody id="entriesTableBody">
+                                <tr class="loading-row">
+                                    <td colspan="7">
+                                        <div class="skeleton-loader"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Investments tab -->
+                <div class="tab-content" id="investments-tab">
+                    <div class="tab-header">
+                        <h3>💎 Inwestycje</h3>
+                        <button class="btn btn-primary" id="addInvestmentBtn">+ Dodaj inwestycję</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="investmentsTable">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Typ</th>
+                                    <th>Ilość</th>
+                                    <th>Cena</th>
+                                    <th>Wartość</th>
+                                    <th>Notatki</th>
+                                    <th>Akcje</th>
+                                </tr>
+                            </thead>
+                            <tbody id="investmentsTableBody">
+                                <tr class="loading-row">
+                                    <td colspan="7">
+                                        <div class="skeleton-loader"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Goals tab -->
+                <div class="tab-content" id="goals-tab">
+                    <div class="tab-header">
+                        <h3>🎯 Cele miesięczne</h3>
+                        <button class="btn btn-primary" id="saveGoalsBtn">💾 Zapisz cele</button>
+                    </div>
+                    <div class="goals-form">
+                        <div class="form-group">
+                            <label for="incomeGoal">Cel zarobków (PLN)</label>
+                            <input type="number" id="incomeGoal" value="20000" step="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="goldGoal">Cel złota (g)</label>
+                            <input type="number" id="goldGoal" value="10" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="investmentsGoal">Cel inwestycji (PLN)</label>
+                            <input type="number" id="investmentsGoal" value="5100" step="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="silverGoal">Cel srebra (g)</label>
+                            <input type="number" id="silverGoal" value="500" step="10">
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal for adding/editing entries -->
+    <div id="entryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="entryModalTitle">Dodaj wpis</h3>
+                <button class="modal-close" id="closeEntryModal">&times;</button>
+            </div>
+            <form id="entryForm">
+                <div class="form-group">
+                    <label for="entryDate">Data</label>
+                    <input type="date" id="entryDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="entryIncome">Zarobki (PLN)</label>
+                    <input type="number" id="entryIncome" step="0.01" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="entryExpense">Wydatki (PLN)</label>
+                    <input type="number" id="entryExpense" step="0.01" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="entryCategory">Kategoria</label>
+                    <input type="text" id="entryCategory" placeholder="np. Zakupy, Rachunki">
+                </div>
+                <div class="form-group">
+                    <label for="entryNotes">Notatki</label>
+                    <textarea id="entryNotes" rows="3" placeholder="Dodatkowe informacje"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelEntry">Anuluj</button>
+                    <button type="submit" class="btn btn-primary">Zapisz</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for adding/editing investments -->
+    <div id="investmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="investmentModalTitle">Dodaj inwestycję</h3>
+                <button class="modal-close" id="closeInvestmentModal">&times;</button>
+            </div>
+            <form id="investmentForm">
+                <div class="form-group">
+                    <label for="investmentDate">Data</label>
+                    <input type="date" id="investmentDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="investmentType">Typ</label>
+                    <select id="investmentType" required>
+                        <option value="gold">Złoto</option>
+                        <option value="silver">Srebro</option>
+                        <option value="stocks">Akcje</option>
+                        <option value="bonds">Obligacje</option>
+                        <option value="crypto">Kryptowaluty</option>
+                        <option value="etf">ETF</option>
+                        <option value="other">Inne</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="investmentAmount">Ilość</label>
+                    <input type="number" id="investmentAmount" step="0.0001" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="investmentPrice">Cena jednostkowa</label>
+                    <input type="number" id="investmentPrice" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="investmentTotal">Wartość całkowita</label>
+                    <input type="number" id="investmentTotal" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="investmentNotes">Notatki</label>
+                    <textarea id="investmentNotes" rows="3" placeholder="Dodatkowe informacje"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelInvestment">Anuluj</button>
+                    <button type="submit" class="btn btn-primary">Zapisz</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.0/dist/gsap.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/countup.js@2.8.0/dist/countUp.umd.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/animations.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
