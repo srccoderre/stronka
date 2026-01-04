@@ -1,82 +1,128 @@
-version: '3.8'
+version: '3.9'
 
 services:
   postgres:
     image: postgres:16-alpine
+    container_name: stronka_postgres
+    restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-portfel}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-portfel_password}
-      POSTGRES_DB: ${POSTGRES_DB:-portfel_db}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
-      - portfel_network
-    restart: unless-stopped
+      - stronka_network
 
   redis:
     image: redis:7-alpine
+    container_name: stronka_redis
+    restart: always
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
-      - portfel_network
-    restart: unless-stopped
+      - stronka_network
 
   api:
     build:
-      context: ./backend
-      dockerfile: ../docker/api/Dockerfile
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+      context: .
+      dockerfile: docker/api/Dockerfile
+    container_name: stronka_api
+    restart: always
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+      APP_NAME: ${APP_NAME}
+      ENVIRONMENT: ${ENVIRONMENT}
+      DEBUG: ${DEBUG}
+      TZ: ${TZ}
+      DOMAIN: ${DOMAIN}
+      FRONTEND_URL: ${FRONTEND_URL}
+      CORS_ORIGINS: ${CORS_ORIGINS}
     volumes:
       - ./backend:/app
-    env_file:
-      - .env
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      - REDIS_URL=redis://redis:6379/0
+    ports:
+      - "8000:8000"
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
-      - portfel_network
-    restart: unless-stopped
+      - stronka_network
 
   celery_worker:
     build:
-      context: ./backend
-      dockerfile: ../docker/api/Dockerfile
-    command: celery -A app.core.celery_app worker --loglevel=info
+      context: .
+      dockerfile: docker/api/Dockerfile
+    container_name: stronka_celery_worker
+    restart: always
+    command: celery -A app.tasks worker -l info --concurrency=4
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+      ENVIRONMENT: ${ENVIRONMENT}
+      TZ: ${TZ}
     volumes:
       - ./backend:/app
-    env_file:
-      - .env
     depends_on:
       - postgres
       - redis
+      - api
     networks:
-      - portfel_network
-    restart: unless-stopped
+      - stronka_network
 
   celery_beat:
     build:
-      context: ./backend
-      dockerfile: ../docker/api/Dockerfile
-    command: celery -A app.core.celery_app beat --loglevel=info
+      context: .
+      dockerfile: docker/api/Dockerfile
+    container_name: stronka_celery_beat
+    restart: always
+    command: celery -A app.tasks beat -l info
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+      TZ: ${TZ}
     volumes:
       - ./backend:/app
-    env_file:
-      - .env
     depends_on:
       - postgres
       - redis
     networks:
-      - portfel_network
-    restart: unless-stopped
+      - stronka_network
 
   nginx:
-    image: nginx:alpine
+    image: nginx:latest-alpine
+    container_name: stronka_nginx
+    restart: always
     volumes:
-      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
       - ./frontend:/usr/share/nginx/html:ro
     ports:
@@ -85,13 +131,79 @@ services:
     depends_on:
       - api
     networks:
-      - portfel_network
-    restart: unless-stopped
+      - stronka_network
 
-networks:
-  portfel_network:
-    driver: bridge
+  flower:
+    image: mher/flower:latest
+    container_name: stronka_flower
+    restart: always
+    command: celery -A app.tasks flower --port=5555
+    environment:
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+    ports:
+      - "5555:5555"
+    depends_on:
+      - celery_worker
+    networks:
+      - stronka_network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: stronka_pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - stronka_network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: stronka_prometheus
+    restart: always
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - stronka_network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: stronka_grafana
+    restart: always
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - stronka_network
 
 volumes:
   postgres_data:
   redis_data:
+  pgadmin_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  stronka_network:
+    driver: bridge
