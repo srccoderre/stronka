@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Mój Portfel 2026 - Enterprise Financial Management System">
+    <meta name="theme-color" content="#2c3e50">
+    <title>Mój Portfel 2026</title>
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Loading Spinner -->
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+    </div>
+    
+    <!-- Main App -->
+    <div id="app" class="app hidden">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="container">
+                <div class="navbar-brand">
+                    <h1>💰 Mój Portfel 2026</h1>
+                </div>
+                <div class="navbar-menu" id="navbarMenu">
+                    <a href="#" data-page="dashboard" class="nav-link active">Dashboard</a>
+                    <a href="#" data-page="entries" class="nav-link">Wpisy</a>
+                    <a href="#" data-page="investments" class="nav-link">Inwestycje</a>
+                    <a href="#" data-page="goals" class="nav-link">Cele</a>
+                    <a href="#" data-page="analytics" class="nav-link">Analityka</a>
+                    <a href="#" data-page="profile" class="nav-link">Profil</a>
+                    <a href="#" id="logoutBtn" class="nav-link">Wyloguj</a>
+                </div>
+                <div class="navbar-notifications">
+                    <button id="notificationsBtn" class="btn-icon">
+                        <span class="icon">🔔</span>
+                        <span id="notificationBadge" class="badge hidden">0</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="container">
+                <!-- Dashboard Page -->
+                <section id="dashboardPage" class="page active">
+                    <h2>Dashboard</h2>
+                    <div id="dashboardStats" class="stats-grid"></div>
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <h3>Przychody vs Wydatki</h3>
+                            <canvas id="incomeExpenseChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3>Kategorie Wydatków</h3>
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Entries Page -->
+                <section id="entriesPage" class="page">
+                    <div class="page-header">
+                        <h2>Wpisy Dzienne</h2>
+                        <button id="addEntryBtn" class="btn btn-primary">+ Nowy Wpis</button>
+                    </div>
+                    <div class="filters">
+                        <input type="date" id="startDate" class="input">
+                        <input type="date" id="endDate" class="input">
+                        <button id="filterEntriesBtn" class="btn btn-secondary">Filtruj</button>
+                    </div>
+                    <div id="entriesList" class="entries-list"></div>
+                </section>
+                
+                <!-- Investments Page -->
+                <section id="investmentsPage" class="page">
+                    <div class="page-header">
+                        <h2>Inwestycje</h2>
+                        <button id="addInvestmentBtn" class="btn btn-primary">+ Nowa Inwestycja</button>
+                    </div>
+                    <div id="investmentSummary" class="investment-summary"></div>
+                    <div id="investmentsList" class="investments-list"></div>
+                </section>
+                
+                <!-- Goals Page -->
+                <section id="goalsPage" class="page">
+                    <h2>Cele Finansowe</h2>
+                    <div class="goals-selector">
+                        <select id="goalYear" class="input"></select>
+                        <select id="goalMonth" class="input"></select>
+                        <button id="loadGoalBtn" class="btn btn-secondary">Załaduj</button>
+                    </div>
+                    <div id="goalForm" class="goal-form"></div>
+                </section>
+                
+                <!-- Analytics Page -->
+                <section id="analyticsPage" class="page">
+                    <h2>Analityka</h2>
+                    <div class="analytics-selector">
+                        <select id="analyticsType" class="input">
+                            <option value="monthly">Miesięczna</option>
+                            <option value="annual">Roczna</option>
+                        </select>
+                        <input type="number" id="analyticsYear" class="input" placeholder="Rok">
+                        <input type="number" id="analyticsMonth" class="input" placeholder="Miesiąc">
+                        <button id="loadAnalyticsBtn" class="btn btn-secondary">Załaduj</button>
+                    </div>
+                    <div id="analyticsData" class="analytics-data"></div>
+                </section>
+                
+                <!-- Profile Page -->
+                <section id="profilePage" class="page">
+                    <h2>Profil Użytkownika</h2>
+                    <div id="profileForm" class="profile-form"></div>
+                </section>
+            </div>
+        </main>
+        
+        <!-- Notifications Panel -->
+        <div id="notificationsPanel" class="notifications-panel hidden">
+            <div class="panel-header">
+                <h3>Powiadomienia</h3>
+                <button id="closeNotificationsBtn" class="btn-close">×</button>
+            </div>
+            <div id="notificationsList" class="notifications-list"></div>
+        </div>
+    </div>
+    
+    <!-- Auth Page -->
+    <div id="authPage" class="auth-page">
+        <div class="auth-container">
+            <h1>💰 Mój Portfel 2026</h1>
+            
+            <!-- Login Form -->
+            <div id="loginForm" class="auth-form">
+                <h2>Logowanie</h2>
+                <form id="loginFormElement">
+                    <input type="text" id="loginUsername" class="input" placeholder="Nazwa użytkownika" required>
+                    <input type="password" id="loginPassword" class="input" placeholder="Hasło" required>
+                    <button type="submit" class="btn btn-primary btn-block">Zaloguj</button>
+                </form>
+                <p class="auth-link">
+                    Nie masz konta? <a href="#" id="showRegisterBtn">Zarejestruj się</a>
+                </p>
+            </div>
+            
+            <!-- Register Form -->
+            <div id="registerForm" class="auth-form hidden">
+                <h2>Rejestracja</h2>
+                <form id="registerFormElement">
+                    <input type="email" id="registerEmail" class="input" placeholder="Email" required>
+                    <input type="text" id="registerUsername" class="input" placeholder="Nazwa użytkownika" required>
+                    <input type="text" id="registerFullName" class="input" placeholder="Imię i nazwisko">
+                    <input type="password" id="registerPassword" class="input" placeholder="Hasło" required>
+                    <button type="submit" class="btn btn-primary btn-block">Zarejestruj</button>
+                </form>
+                <p class="auth-link">
+                    Masz już konto? <a href="#" id="showLoginBtn">Zaloguj się</a>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal -->
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Modal</h3>
+                <button id="modalCloseBtn" class="btn-close">×</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+    
+    <!-- Toast -->
+    <div id="toast" class="toast hidden"></div>
+    
+    <!-- Scripts -->
+    <script type="module" src="/js/api/index.js"></script>
+    <script type="module" src="/js/app/init.js"></script>
+</body>
+</html>
